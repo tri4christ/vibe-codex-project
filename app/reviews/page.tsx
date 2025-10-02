@@ -14,7 +14,11 @@ export default function ReviewsPage() {
   if (!activeBusiness) {
     return (
       <WorkspaceLayout>
-        <Section title="No business selected" description="Choose a Home Business to review reputation." />
+        <Section title="No business selected" description="Choose a Home Business to review reputation.">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Pick a home business to approve AI-drafted responses and manage public reviews.
+          </p>
+        </Section>
       </WorkspaceLayout>
     );
   }

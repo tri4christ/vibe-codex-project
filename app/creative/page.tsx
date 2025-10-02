@@ -21,7 +21,11 @@ export default function CreativePage() {
   if (!activeBusiness) {
     return (
       <WorkspaceLayout>
-        <Section title="No business selected" description="Choose a Home Business to manage creative briefs." />
+        <Section title="No business selected" description="Choose a Home Business to manage creative briefs.">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Once you pick a home business, you can draft campaign briefs and review generated concepts here.
+          </p>
+        </Section>
       </WorkspaceLayout>
     );
   }

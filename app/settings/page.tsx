@@ -5,6 +5,7 @@ import { WorkspaceLayout } from '@/components/WorkspaceLayout';
 import { Section } from '@/components/Section';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
+import { AGENTS } from '@/lib/agents';
 
 export default function SettingsPage() {
   const [brandName, setBrandName] = useState('Creo Wellness Collective');
@@ -12,6 +13,20 @@ export default function SettingsPage() {
   const [businessHours, setBusinessHours] = useState('Mon-Fri: 8am – 6pm\nSat: 9am – 1pm');
   const [aiApprovalsEnabled, setAiApprovalsEnabled] = useState(true);
   const [justSaved, setJustSaved] = useState(false);
+  const [teamRoles, setTeamRoles] = useState<Record<string, string>>(() => {
+    const defaults: Record<string, string> = {};
+    AGENTS.forEach(agent => {
+      defaults[agent.id] = agent.role;
+    });
+    return defaults;
+  });
+  const [teamVisibility, setTeamVisibility] = useState<Record<string, boolean>>(() => {
+    const defaults: Record<string, boolean> = {};
+    AGENTS.forEach(agent => {
+      defaults[agent.id] = true;
+    });
+    return defaults;
+  });
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -70,6 +85,61 @@ export default function SettingsPage() {
             </Button>
           </div>
         </form>
+      </Section>
+
+      <Section title="Team & Roles" description="Adjust how humans and AI appear across the workspace.">
+        <div className="space-y-4 text-sm">
+          {AGENTS.map(agent => {
+            const isVisible = teamVisibility[agent.id];
+            return (
+              <div
+                key={agent.id}
+                className="rounded-2xl border border-slate-200 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/40"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-slate-700 dark:text-slate-200">{agent.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {agent.kind === 'human' ? 'Franchise owner' : 'AI specialist'}
+                    </p>
+                  </div>
+                  <Chip variant={isVisible ? 'success' : 'warning'}>
+                    {isVisible ? 'Shown on sidebar' : 'Hidden from sidebar'}
+                  </Chip>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <label className="space-y-1 text-xs">
+                    <span className="text-slate-500 dark:text-slate-400">Role</span>
+                    <input
+                      value={teamRoles[agent.id] ?? agent.role}
+                      onChange={event =>
+                        setTeamRoles(prev => ({
+                          ...prev,
+                          [agent.id]: event.target.value,
+                        }))
+                      }
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                    />
+                  </label>
+                  <label className="inline-flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <input
+                      type="checkbox"
+                      checked={isVisible}
+                      onChange={event =>
+                        setTeamVisibility(prev => ({
+                          ...prev,
+                          [agent.id]: event.target.checked,
+                        }))
+                      }
+                      className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500 dark:border-slate-600 dark:text-slate-100"
+                    />
+                    Show on business sidebar
+                  </label>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </Section>
     </WorkspaceLayout>
   );

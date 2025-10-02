@@ -79,7 +79,9 @@ export function MarketingSetup({ homeBusinessId, signals }: MarketingSetupProps)
 
   if (!setup) {
     return (
-      <Section title="Marketing setup" description="Initialising tasks..." />
+      <Section title="Marketing setup" description="Initialising tasks...">
+        <p className="text-sm text-slate-500 dark:text-slate-400">We are fetching the latest checklist for this home business.</p>
+      </Section>
     );
   }
 

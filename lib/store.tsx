@@ -672,7 +672,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
     const achieved = setup.tasks.reduce((sum, task) => sum + statusScore(task), 0);
     const score = Math.round((achieved / totalWeight) * 100);
-    const band = score < 50 ? 'red' : score < 80 ? 'amber' : 'green';
+    const band: 'red' | 'amber' | 'green' = score < 50 ? 'red' : score < 80 ? 'amber' : 'green';
     return { score, band };
   };
 

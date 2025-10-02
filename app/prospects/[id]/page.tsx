@@ -11,6 +11,12 @@ import { Button } from '@/components/Button';
 import { Sparkles } from 'lucide-react';
 import { useCreoStore } from '@/lib/store';
 
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+export function generateStaticParams() {
+  return [] as Array<{ id: string }>;
+}
+
 const TABS = ['Overview', 'People', 'Timeline', 'Playbooks'] as const;
 
 type TabKey = (typeof TABS)[number];
@@ -36,7 +42,11 @@ export default function ProspectDetailPage() {
   if (!prospect) {
     return (
       <WorkspaceLayout>
-        <Section title="Prospect not found" description="Return to Prospects to select another record." />
+        <Section title="Prospect not found" description="Return to Prospects to select another record.">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            The requested prospect may have been archived or renamed.
+          </p>
+        </Section>
       </WorkspaceLayout>
     );
   }
