@@ -1,0 +1,23 @@
+# Dependencies
+node_modules
+
+# Build outputs
+.next
+out
+
+# Env files
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Misc
+.DS_Store
+*.log
+*.pem
+.idea
+.vscode
+node_modules/
+.next/
+.DS_Store
