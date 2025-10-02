@@ -14,6 +14,8 @@ const buttonVariants = cva(
           'bg-gray-900 text-white hover:bg-gray-700 focus-visible:ring-gray-400 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-300',
         outline:
           'border border-gray-300 bg-transparent hover:bg-gray-100 text-gray-900 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-800',
+        ghost:
+          'bg-transparent text-gray-900 hover:bg-gray-100 focus-visible:ring-gray-300 dark:text-gray-100 dark:hover:bg-gray-800',
       },
       size: {
         default: 'h-10 px-4 py-2',
@@ -30,7 +32,39 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {}
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+function composeRefs<T>(...refs: Array<React.Ref<T> | undefined>) {
+  return (node: T | null) => {
+    for (const ref of refs) {
+      if (!ref) continue;
+      if (typeof ref === 'function') {
+        ref(node);
+      } else {
+        (ref as React.MutableRefObject<T | null>).current = node;
+      }
+    }
+  };
+}
+
+const Slot = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
+  ({ children, className, ...props }, ref) => {
+    if (!React.isValidElement(children)) {
+      return null;
+    }
+
+    const childWithRef = children as React.ReactElement & { ref?: React.Ref<HTMLElement> };
+
+    return React.cloneElement(children, {
+      ...props,
+      className: cn((children.props as { className?: string }).className, className),
+      ref: composeRefs(childWithRef.ref, ref),
+    });
+  },
+);
+Slot.displayName = 'Slot';
 
 /**
  * A reusable Button component.  Pass `variant` and `size` props to select
@@ -38,12 +72,33 @@ export interface ButtonProps
  * `<button>` element.
  */
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, type, disabled, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button';
+    const commonClassName = cn(
+      buttonVariants({ variant, size }),
+      disabled && asChild ? 'pointer-events-none opacity-50' : undefined,
+      className,
+    );
+
+    if (asChild) {
+      const ariaDisabled = disabled ? { 'aria-disabled': true, tabIndex: -1 } : {};
+      return (
+        <Comp
+          {...ariaDisabled}
+          {...props}
+          className={commonClassName}
+          ref={ref as React.Ref<HTMLElement>}
+        />
+      );
+    }
+
     return (
-      <button
-        ref={ref}
-        className={cn(buttonVariants({ variant, size }), className)}
+      <Comp
         {...props}
+        type={type ?? 'button'}
+        disabled={disabled}
+        className={commonClassName}
+        ref={ref}
       />
     );
   },

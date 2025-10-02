@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { WorkspaceLayout } from '@/components/WorkspaceLayout';
@@ -10,7 +10,7 @@ import { Button } from '@/components/Button';
 import { AddProspectDrawer } from '@/components/AddProspectDrawer';
 import { useCreoStore } from '@/lib/store';
 import type { ProspectBusiness, ProspectStage } from '@/lib/types';
-import { Search, UserPlus, Play } from 'lucide-react';
+import { Search, UserPlus, Play, CheckCircle2 } from 'lucide-react';
 
 const STAGE_OPTIONS: ProspectStage[] = ['Discovered', 'Qualified', 'Pursuing', 'Proposal', 'Won', 'Lost'];
 
@@ -23,6 +23,9 @@ export default function ProspectsPage() {
   const [ownerFilter, setOwnerFilter] = useState('');
   const [minIcpFit, setMinIcpFit] = useState(60);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [playbookRuns, setPlaybookRuns] = useState<Record<string, 'idle' | 'running' | 'success'>>({});
+  const [activityLog, setActivityLog] = useState<Array<{ id: string; prospectId: string; message: string; timestamp: string }>>([]);
+  const timersRef = useRef<number[]>([]);
 
   const homeProspects = useMemo(
     () => prospects.filter(prospect => prospect.homeBusinessId === activeHomeBusinessId),
@@ -46,6 +49,47 @@ export default function ProspectsPage() {
 
   const handleCreateProspect = (prospect: ProspectBusiness) => {
     addProspect(prospect);
+  };
+
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(timerId => window.clearTimeout(timerId));
+      timersRef.current = [];
+    };
+  }, []);
+
+  const handleRunPlaybook = (prospect: ProspectBusiness) => {
+    if (playbookRuns[prospect.id] === 'running') return;
+
+    const queuedEntry = {
+      id: `log-${prospect.id}-${Date.now()}`,
+      prospectId: prospect.id,
+      message: `Playbook queued for ${prospect.name}.`,
+      timestamp: new Date().toISOString(),
+    };
+
+    setPlaybookRuns(prev => ({ ...prev, [prospect.id]: 'running' }));
+    setActivityLog(prev => [queuedEntry, ...prev].slice(0, 10));
+
+    const completionTimer = window.setTimeout(() => {
+      const completedEntry = {
+        id: `log-${prospect.id}-${Date.now()}`,
+        prospectId: prospect.id,
+        message: `Playbook completed for ${prospect.name}.`,
+        timestamp: new Date().toISOString(),
+      };
+
+      setPlaybookRuns(prev => ({ ...prev, [prospect.id]: 'success' }));
+      setActivityLog(prev => [completedEntry, ...prev].slice(0, 10));
+
+      const resetTimer = window.setTimeout(() => {
+        setPlaybookRuns(prev => ({ ...prev, [prospect.id]: 'idle' }));
+      }, 2000);
+
+      timersRef.current.push(resetTimer);
+    }, 800);
+
+    timersRef.current.push(completionTimer);
   };
 
   return (
@@ -161,9 +205,10 @@ export default function ProspectsPage() {
                   <Button size="sm" variant="outline" onClick={() => router.push(`/people?prospect=${prospect.id}`)} className="flex items-center gap-2">
                     <UserPlus className="h-4 w-4" /> Add Contact
                   </Button>
-                  <Button size="sm" variant="outline" className="flex items-center gap-2" onClick={() => alert('Playbook run simulated')}> 
-                    <Play className="h-4 w-4" /> Run Playbook
-                  </Button>
+                  <PlaybookRunButton
+                    status={playbookRuns[prospect.id] ?? 'idle'}
+                    onRun={() => handleRunPlaybook(prospect)}
+                  />
                 </div>
               </div>
             ))}
@@ -182,6 +227,53 @@ export default function ProspectsPage() {
           router.push(`/prospects/${id}`);
         }}
       />
+
+      {activityLog.length ? (
+        <Section title="Recent playbook activity" description="Lightweight log of queued playbook runs.">
+          <div className="space-y-2 text-sm">
+            {activityLog.map(entry => (
+              <div
+                key={entry.id}
+                className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white/70 px-4 py-2 dark:border-slate-700 dark:bg-slate-900/40"
+              >
+                <p className="text-slate-600 dark:text-slate-300">{entry.message}</p>
+                <span className="text-xs text-slate-400 dark:text-slate-500">{new Date(entry.timestamp).toLocaleTimeString()}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      ) : null}
     </WorkspaceLayout>
+  );
+}
+
+interface PlaybookRunButtonProps {
+  status: 'idle' | 'running' | 'success';
+  onRun: () => void;
+}
+
+function PlaybookRunButton({ status, onRun }: PlaybookRunButtonProps) {
+  const isRunning = status === 'running';
+  const isSuccess = status === 'success';
+
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        size="sm"
+        variant="outline"
+        className="flex items-center gap-2"
+        disabled={isRunning}
+        onClick={onRun}
+      >
+        <Play className="h-4 w-4" />
+        {isRunning ? 'Queuing…' : isSuccess ? 'Playbook ready' : 'Run Playbook'}
+      </Button>
+      {isSuccess ? (
+        <Chip variant="success" className="flex items-center gap-1 text-[11px]">
+          <CheckCircle2 className="h-3 w-3" />
+          Success
+        </Chip>
+      ) : null}
+    </div>
   );
 }
