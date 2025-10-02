@@ -37,6 +37,7 @@ const NAV_ITEMS = [
   { key: 'training', label: 'Training', href: '/training', icon: Upload },
   { key: 'creative', label: 'Creative', href: '/creative', icon: Palette },
   { key: 'reviews', label: 'Reviews', href: '/reviews', icon: MessageSquare },
+  { key: 'teamroom', label: 'Teamroom', href: '/teamroom', icon: Users },
   { key: 'settings', label: 'Settings', href: '/settings', icon: Settings },
 ] as const;
 
@@ -141,7 +142,7 @@ export function WorkspaceLayout({ children, headerActions }: WorkspaceLayoutProp
                     const agent = agentRegistry[agentId];
                     if (!agent) return null;
                     if (!hasMounted) {
-                      return <AgentBadge key={`${business.id}-${agentId}`} agent={agent} />;
+                      return <AgentBadge key={`${business.id}-${agentId}`} agent={agent} size="xs" />;
                     }
                     return (
                       <button
@@ -150,14 +151,7 @@ export function WorkspaceLayout({ children, headerActions }: WorkspaceLayoutProp
                         onClick={() => setOpenAgentId(agent.id)}
                         className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-2 py-1 text-slate-600 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-600"
                       >
-                        {agent.kind === 'human' ? (
-                          <Image src={getAvatar(agent)} alt={agent.name} width={24} height={24} className="h-6 w-6 rounded-full object-cover" />
-                        ) : (
-                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900/10 text-base">
-                            {agent.emoji}
-                          </span>
-                        )}
-                        <span className="text-xs font-medium">{agent.name}</span>
+                        <AgentBadge agent={agent} size="xs" />
                       </button>
                     );
                   })}

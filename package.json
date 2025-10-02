@@ -11,7 +11,8 @@
     "start": "next start",
     "preview": "npm run build && npm run export",
     "lint": "next lint",
-    "codex": "ts-node scripts/codex.ts"
+    "codex": "ts-node scripts/codex.ts",
+    "normalize:avatars": "node scripts/normalize-avatars.mjs"
   },
   "dependencies": {
     "autoprefixer": "^10.4.16",

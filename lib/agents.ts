@@ -25,6 +25,7 @@ export const AGENTS: readonly Agent[] = [
     role: 'Prospect navigator',
     kind: 'ai',
     emoji: '🧭',
+    avatar: '/agents/scout.jpg',
     color: 'sky-500',
     blurb: 'Maps emerging franchise opportunities before competitors do.',
   },
@@ -34,6 +35,7 @@ export const AGENTS: readonly Agent[] = [
     role: 'Pipeline mechanic',
     kind: 'ai',
     emoji: '🛠️',
+    avatar: '/agents/caleb.jpg',
     color: 'amber-500',
     blurb: 'Keeps automations tuned so every lead moves forward on time.',
   },
@@ -43,6 +45,7 @@ export const AGENTS: readonly Agent[] = [
     role: 'Narrative architect',
     kind: 'ai',
     emoji: '📝',
+    avatar: '/agents/story.jpg',
     color: 'rose-500',
     blurb: 'Drafts copy that mirrors each franchise voice across channels.',
   },
@@ -52,6 +55,7 @@ export const AGENTS: readonly Agent[] = [
     role: 'Outreach maestro',
     kind: 'ai',
     emoji: '📣',
+    avatar: '/agents/piper.jpg',
     color: 'violet-500',
     blurb: 'Manages 1:1 outreach with tone-matched follow ups ready to send.',
   },
@@ -61,6 +65,7 @@ export const AGENTS: readonly Agent[] = [
     role: 'Growth analyst',
     kind: 'ai',
     emoji: '📊',
+    avatar: '/agents/eden.jpg',
     color: 'emerald-500',
     blurb: 'Models channel mix and spend to keep ROI targets on track.',
   },
@@ -70,6 +75,7 @@ export const AGENTS: readonly Agent[] = [
     role: 'Deal closer',
     kind: 'ai',
     emoji: '🤝',
+    avatar: '/agents/leo.jpg',
     color: 'indigo-500',
     blurb: 'Preps proposals and anticipates objections before handoff.',
   },
@@ -79,7 +85,7 @@ export const AGENTS: readonly Agent[] = [
     role: 'Business Director',
     kind: 'human',
     color: 'slate-600',
-    avatar: '/agents/katie-elliott.jpg',
+    avatar: '/agents/katie.jpg',
     blurb: 'Owns franchise expansion plans and signs off on every rollout.',
   },
   {
@@ -88,11 +94,11 @@ export const AGENTS: readonly Agent[] = [
     role: 'Creative Director',
     kind: 'human',
     color: 'slate-500',
-    avatar: '/agents/ezra-elliott.jpg',
+    avatar: '/agents/ezra.jpg',
     blurb: 'Elevates campaign look-and-feel and protects the master brand.',
   },
 ] as const;
 
 export function getAvatar(agent: Agent): string {
-  return agent.kind === 'human' ? agent.avatar : agent.avatar ?? '/agents/fallback.png';
+  return agent.avatar ?? '/agents/fallback.png';
 }
