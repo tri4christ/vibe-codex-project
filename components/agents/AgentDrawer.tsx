@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from 'react';
-import { AgentBadge } from '@/components/agents/AgentBadge';
+import Image from 'next/image';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
-import { AGENTS } from '@/lib/agents';
+import { AGENTS, getAvatar, type Agent } from '@/lib/agents';
 import { useCreoStore } from '@/lib/store';
 
 interface AgentDrawerProps {
@@ -50,9 +50,15 @@ export function AgentDrawer({ agentId, open, onClose }: AgentDrawerProps) {
       <div className="flex-1 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
       <aside className="flex h-full w-full max-w-sm flex-col bg-white shadow-xl dark:bg-slate-900">
         <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-6 py-5 dark:border-slate-800">
-          <div className="space-y-2">
-            <AgentBadge agent={agent} />
-            <Chip variant="info" className="text-[10px]">{agent.kind === 'human' ? 'Human operator' : 'AI agent'}</Chip>
+          <div className="flex items-center gap-3">
+            {renderProfileAvatar(agent)}
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{agent.name}</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{agent.role}</p>
+              <Chip variant="info" className="text-[10px]">
+                {agent.kind === 'human' ? 'Human operator' : 'AI agent'}
+              </Chip>
+            </div>
           </div>
           <button
             type="button"
@@ -133,5 +139,31 @@ export function AgentDrawer({ agentId, open, onClose }: AgentDrawerProps) {
         </div>
       </aside>
     </div>
+  );
+}
+
+function renderProfileAvatar(agent: Agent) {
+  const src = getAvatar(agent);
+  if (src === '/agents/fallback.png') {
+    return (
+      <span
+        role="img"
+        aria-label={`${agent.name} avatar`}
+        className="flex h-24 w-24 items-center justify-center rounded-full bg-slate-900/10 text-4xl sm:h-[120px] sm:w-[120px]"
+      >
+        {agent.kind === 'human' ? '👤' : agent.emoji}
+      </span>
+    );
+  }
+  return (
+    <Image
+      src={src}
+      alt={`${agent.name}, ${agent.role}`}
+      width={120}
+      height={120}
+      sizes="(max-width: 640px) 96px, 120px"
+      priority
+      className="h-24 w-24 rounded-full object-cover sm:h-[120px] sm:w-[120px]"
+    />
   );
 }

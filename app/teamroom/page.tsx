@@ -6,6 +6,7 @@ import { Section } from '@/components/Section';
 import { AgentBadge } from '@/components/agents/AgentBadge';
 import { Chip } from '@/components/Chip';
 import { AGENTS } from '@/lib/agents';
+import { StandupFeed, type StandupPost } from '@/components/team/StandupFeed';
 
 const STATUS_OPTIONS = [
   { value: 'online', label: 'Online', variant: 'success' as const },
@@ -20,6 +21,51 @@ export default function TeamroomPage() {
   const aiCrew = useMemo(() => AGENTS.filter(agent => agent.kind === 'ai'), []);
   const [search, setSearch] = useState('');
   const [statuses, setStatuses] = useState<Record<string, typeof STATUS_OPTIONS[number]['value']>>({});
+  const initialStandup = useMemo<StandupPost[]>(
+    () => [
+      {
+        id: 'standup-1',
+        agentId: 'caleb',
+        message: 'Queued outreach sequences for Summit Ridge and nudging the ops handoff.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+        action: { label: 'Queue outreach', nextStatus: 'queued outreach' },
+      },
+      {
+        id: 'standup-2',
+        agentId: 'piper',
+        message: 'Drafted warm intro for Harborlight Therapy with personalization toggles.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
+        action: { label: 'Approve send', nextStatus: 'sent the outreach' },
+      },
+      {
+        id: 'standup-3',
+        agentId: 'eden',
+        message: 'Updated pricing model for northeast region — margin holding at 32%.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+        action: { label: 'Approve pricing', nextStatus: 'finalized pricing' },
+      },
+      {
+        id: 'standup-4',
+        agentId: 'story',
+        message: 'Hero banner copy polished with wellness value props and CTA variants.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+      },
+      {
+        id: 'standup-5',
+        agentId: 'leo',
+        message: 'Prepared contract packet with revised onboarding schedule.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 9).toISOString(),
+        action: { label: 'Approve contract', nextStatus: 'sent the contract' },
+      },
+      {
+        id: 'standup-6',
+        agentId: 'katie-elliott',
+        message: 'Cleared blockers for franchise partnerships in the midwest corridor.',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+      },
+    ],
+    [],
+  );
 
   const filteredCrew = useMemo(() => {
     if (!search.trim()) return aiCrew;
@@ -91,6 +137,10 @@ export default function TeamroomPage() {
                 })}
               </div>
             )}
+          </div>
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Standup feed</h3>
+            <StandupFeed posts={initialStandup} />
           </div>
         </div>
       </Section>
