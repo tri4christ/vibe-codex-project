@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { X, Sparkles, Edit3, Trash2, Flame, Zap, Clock3, Info, Plus } from 'lucide-react';
 import type { ContactRecord } from '@/lib/mockData';
 import { useCreoStore } from '@/lib/store';
@@ -11,6 +12,8 @@ import { Chip } from '@/components/Chip';
 import { StatusDot } from '@/components/StatusDot';
 import { ChipInput } from '@/components/ChipInput';
 import { cn } from '@/lib/utils';
+import { AGENTS, getAvatar, type Agent } from '@/lib/agents';
+import { formatRelative } from '@/lib/time';
 
 type DrawerTab = 'Profile' | 'Memory' | 'Timeline';
 
@@ -38,6 +41,9 @@ function FactRow({ fact, onToggle, onEdit, onDelete }: FactRowProps) {
     snippet: fact.snippet ?? '',
   });
 
+  const attributionAgent = useMemo(() => selectAgentForFact(fact), [fact.id, fact.key, fact.label, fact.snippet]);
+  const relativeTime = useMemo(() => formatRelative(fact.lastSeenAt), [fact.lastSeenAt]);
+
   useEffect(() => {
     setForm({
       label: fact.label,
@@ -46,7 +52,7 @@ function FactRow({ fact, onToggle, onEdit, onDelete }: FactRowProps) {
       snippet: fact.snippet ?? '',
     });
     setIsEditing(false);
-  }, [fact.id]);
+  }, [fact.confidence, fact.id, fact.label, fact.snippet, fact.status]);
 
   const freshnessLabel = freshness(fact.lastSeenAt);
 
@@ -75,6 +81,15 @@ function FactRow({ fact, onToggle, onEdit, onDelete }: FactRowProps) {
           />
         ) : fact.snippet ? (
           <p className="text-slate-500 dark:text-slate-400">{fact.snippet}</p>
+        ) : null}
+        {!isEditing ? (
+          <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-2 py-0.5 dark:bg-slate-800">
+              {renderAgentGlyph(attributionAgent)}
+              <span>Learned by {attributionAgent.name}</span>
+            </span>
+            <span>· {relativeTime}</span>
+          </div>
         ) : null}
       </div>
       <div className="flex items-center gap-1">
@@ -178,6 +193,41 @@ function FactRow({ fact, onToggle, onEdit, onDelete }: FactRowProps) {
   );
 }
 
+const FACT_AGENT_RULES: Array<{ pattern: RegExp; agentId: string }> = [
+  { pattern: /pricing|quote|contract/i, agentId: 'leo' },
+  { pattern: /pricing|cost|budget/i, agentId: 'eden' },
+  { pattern: /copy|narrative|story|content/i, agentId: 'story' },
+  { pattern: /outreach|email|follow/i, agentId: 'piper' },
+  { pattern: /prospect|scout|discovery/i, agentId: 'scout' },
+];
+
+function selectAgentForFact(fact: MemoryFact): Agent {
+  for (const rule of FACT_AGENT_RULES) {
+    if (rule.pattern.test(fact.label) || rule.pattern.test(fact.key) || (fact.snippet && rule.pattern.test(fact.snippet))) {
+      const match = AGENTS.find(agent => agent.id === rule.agentId);
+      if (match) return match;
+    }
+  }
+  const index = Math.abs(hashString(fact.id)) % AGENTS.length;
+  return AGENTS[index];
+}
+
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash;
+}
+
+function renderAgentGlyph(agent: Agent) {
+  if (agent.kind === 'human') {
+    return <Image src={getAvatar(agent)} alt={agent.name} width={16} height={16} className="h-4 w-4 rounded-full object-cover" />;
+  }
+  return <span className="text-base">{agent.emoji}</span>;
+}
+
 interface PromoteDialogProps {
   event: TimelineEvent;
   onSubmit: (payload: { status: MemoryFact['status']; confidence: number; label: string }) => void;
@@ -193,7 +243,7 @@ function PromoteDialog({ event, onSubmit, onCancel }: PromoteDialogProps) {
 
   useEffect(() => {
     setForm({ status: 'positive', confidence: 0.75, label: event.title });
-  }, [event.id]);
+  }, [event.id, event.title]);
 
   return (
     <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm dark:border-slate-700 dark:bg-slate-900">

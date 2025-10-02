@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
+import Image from 'next/image';
 import {
   LayoutDashboard,
   Bot,
@@ -18,10 +19,15 @@ import {
   Moon,
 } from 'lucide-react';
 import { useCreoStore } from '@/lib/store';
-import { AI_AGENTS } from '@/lib/mockData';
+import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { StatusDot } from '@/components/StatusDot';
 import { cn } from '@/lib/utils';
+import { AGENTS, getAvatar, type Agent } from '@/lib/agents';
+import { AgentDrawer } from '@/components/agents/AgentDrawer';
+import { AgentBadge } from '@/components/agents/AgentBadge';
+import { AssignDialog } from '@/components/agents/AssignDialog';
+import { OwnerHUD } from '@/components/owner/OwnerHUD';
 
 const NAV_ITEMS = [
   { key: 'dashboard', label: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -41,7 +47,7 @@ interface WorkspaceLayoutProps {
 
 export function WorkspaceLayout({ children, headerActions }: WorkspaceLayoutProps) {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const {
     businesses,
     activeHomeBusinessId,
@@ -49,12 +55,34 @@ export function WorkspaceLayout({ children, headerActions }: WorkspaceLayoutProp
     companySignals,
   } = useCreoStore();
 
-  const agentLookup = useMemo(() => {
-    return AI_AGENTS.reduce<Record<string, { emoji: string; name: string }>>((acc, agent) => {
-      acc[agent.id] = { emoji: agent.emoji, name: agent.name };
+  const agentRegistry = useMemo(() => {
+    return AGENTS.reduce<Record<string, Agent>>((acc, agent) => {
+      acc[agent.id] = agent;
       return acc;
     }, {});
   }, []);
+
+  const [openAgentId, setOpenAgentId] = useState<string | null>(null);
+  const [hasMounted, setHasMounted] = useState(false);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [assignments, setAssignments] = useState<Record<string, string[]>>({});
+  const [hudOpen, setHudOpen] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  useEffect(() => {
+    setAssignments(prev => {
+      const next: Record<string, string[]> = { ...prev };
+      businesses.forEach(business => {
+        if (!(business.id in next)) {
+          next[business.id] = business.aiAgentIds;
+        }
+      });
+      return next;
+    });
+  }, [businesses]);
 
   useEffect(() => {
     if (!businesses.length) return;
@@ -70,10 +98,13 @@ export function WorkspaceLayout({ children, headerActions }: WorkspaceLayoutProp
 
   const signals = activeBusiness ? companySignals[activeBusiness.id] ?? [] : [];
 
-  const themeIcon = theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />;
+  const fallbackThemeIcon = <Moon className="h-4 w-4" />;
+  const effectiveTheme = hasMounted ? (theme === 'system' ? resolvedTheme : theme) : undefined;
+  const themeIcon = effectiveTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />;
 
   function handleThemeToggle() {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    const nextTheme = effectiveTheme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme ?? 'light');
   }
 
   return (
@@ -106,21 +137,38 @@ export function WorkspaceLayout({ children, headerActions }: WorkspaceLayoutProp
                   </Chip>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                  {business.aiAgentIds.map(agentId => {
-                    const agent = agentLookup[agentId];
+                  {(assignments[business.id] ?? business.aiAgentIds).map(agentId => {
+                    const agent = agentRegistry[agentId];
+                    if (!agent) return null;
+                    if (!hasMounted) {
+                      return <AgentBadge key={`${business.id}-${agentId}`} agent={agent} />;
+                    }
                     return (
-                      <span
+                      <button
                         key={`${business.id}-${agentId}`}
-                        className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2 py-1 text-slate-600 dark:bg-slate-900/80 dark:text-slate-300"
+                        type="button"
+                        onClick={() => setOpenAgentId(agent.id)}
+                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-2 py-1 text-slate-600 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-600"
                       >
-                        <span>{agent?.emoji ?? '🤖'}</span>
-                        {agent?.name ?? agentId}
-                      </span>
+                        {agent.kind === 'human' ? (
+                          <Image src={getAvatar(agent)} alt={agent.name} width={24} height={24} className="h-6 w-6 rounded-full object-cover" />
+                        ) : (
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900/10 text-base">
+                            {agent.emoji}
+                          </span>
+                        )}
+                        <span className="text-xs font-medium">{agent.name}</span>
+                      </button>
                     );
                   })}
                 </div>
               </button>
             ))}
+          </div>
+          <div className="pt-2">
+            <Button size="sm" variant="outline" className="w-full" onClick={() => setIsAssignDialogOpen(true)}>
+              Assign Team
+            </Button>
           </div>
         </aside>
         <section className="flex-1 space-y-6">
@@ -156,12 +204,16 @@ export function WorkspaceLayout({ children, headerActions }: WorkspaceLayoutProp
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={handleThemeToggle}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                    disabled={!hasMounted}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
-                    {themeIcon}
+                    {hasMounted ? themeIcon : fallbackThemeIcon}
                     Toggle theme
                   </button>
                   {headerActions}
+                  <Button size="sm" variant="outline" onClick={() => setHudOpen(prev => !prev)}>
+                    Owner HUD
+                  </Button>
                 </div>
               </div>
               <div className="flex flex-wrap gap-6 text-sm text-slate-500 dark:text-slate-400">
@@ -206,6 +258,19 @@ export function WorkspaceLayout({ children, headerActions }: WorkspaceLayoutProp
           <div className="space-y-6 pb-10">{children}</div>
         </section>
       </div>
+      <AgentDrawer agentId={openAgentId} open={Boolean(openAgentId)} onClose={() => setOpenAgentId(null)} />
+      <AssignDialog
+        open={isAssignDialogOpen}
+        onClose={() => setIsAssignDialogOpen(false)}
+        assigned={assignments[activeHomeBusinessId] ?? []}
+        onChange={ids =>
+          setAssignments(prev => ({
+            ...prev,
+            [activeHomeBusinessId]: ids,
+          }))
+        }
+      />
+      <OwnerHUD open={hudOpen} onClose={() => setHudOpen(false)} />
     </div>
   );
 }

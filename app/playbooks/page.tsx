@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, type ReactElement, type ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { WorkspaceLayout } from '@/components/WorkspaceLayout';
 import { Section } from '@/components/Section';
@@ -12,6 +12,7 @@ import { MarketingSetup } from '@/components/playbooks/MarketingSetup';
 import { useCreoStore } from '@/lib/store';
 import { PLAYBOOK_STEPS, AI_AGENTS } from '@/lib/mockData';
 import type { ProspectBusiness, SignalItem, ContactMemory } from '@/lib/types';
+import type { ContactRecord } from '@/lib/mockData';
 import type { BusinessPlaybookState } from '@/lib/mockData';
 import { Sparkles, FileText, Users, Bot } from 'lucide-react';
 
@@ -120,8 +121,16 @@ export default function PlaybooksPage() {
         };
       }),
     );
-    if (stepId === 'pricing' && activeContact) {
-      appendPricingFact(activeContact);
+    if (stepId === 'pricing' && activeContact && activeBusiness) {
+      const contactSnapshot: ContactRecord = {
+        id: activeContact.id,
+        name: activeContact.name,
+        role: activeContact.title ?? 'Prospect contact',
+        company: activeBusiness.name,
+        stage: 'Discovery',
+        lastTouch: 'Recently',
+      };
+      appendPricingFact(contactSnapshot);
     }
   }
 
@@ -171,9 +180,9 @@ export default function PlaybooksPage() {
     id: 'prospect-to-contract' | 'marketing-setup';
     title: string;
     description: string;
-    icon: JSX.Element;
+    icon: ReactElement;
     meta: string;
-    footer?: React.ReactNode;
+    footer?: ReactNode;
   }) => (
     <button
       key={options.id}
@@ -412,7 +421,11 @@ function ProspectToContract({
           {activeContact ? (
             <PersonalizationPanel contactId={activeContact.id} memory={activeMemory} signals={signals} />
           ) : (
-            <Section title="Draft personalization" description="Add a contact to see personalization toggles." />
+            <Section title="Draft personalization" description="Add a contact to see personalization toggles.">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Once a contact is linked, tailored tone, interests, and signal controls unlock here.
+              </p>
+            </Section>
           )}
           <RecentSignals signals={signals} />
         </div>

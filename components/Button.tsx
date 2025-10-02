@@ -57,11 +57,13 @@ const Slot = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
 
     const childWithRef = children as React.ReactElement & { ref?: React.Ref<HTMLElement> };
 
-    return React.cloneElement(children, {
-      ...props,
+    const mergedProps = {
+      ...(props as Record<string, unknown>),
       className: cn((children.props as { className?: string }).className, className),
       ref: composeRefs(childWithRef.ref, ref),
-    });
+    };
+
+    return React.cloneElement(children as React.ReactElement, mergedProps);
   },
 );
 Slot.displayName = 'Slot';
@@ -71,9 +73,8 @@ Slot.displayName = 'Slot';
  * different styles.  Additional props are forwarded to the underlying
  * `<button>` element.
  */
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+export const Button = React.forwardRef<HTMLElement, ButtonProps>(
   ({ className, variant, size, asChild = false, type, disabled, ...props }, ref) => {
-    const Comp = asChild ? Slot : 'button';
     const commonClassName = cn(
       buttonVariants({ variant, size }),
       disabled && asChild ? 'pointer-events-none opacity-50' : undefined,
@@ -83,22 +84,22 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     if (asChild) {
       const ariaDisabled = disabled ? { 'aria-disabled': true, tabIndex: -1 } : {};
       return (
-        <Comp
+        <Slot
+          {...(props as Record<string, unknown>)}
           {...ariaDisabled}
-          {...props}
           className={commonClassName}
-          ref={ref as React.Ref<HTMLElement>}
+          ref={ref}
         />
       );
     }
 
     return (
-      <Comp
+      <button
         {...props}
         type={type ?? 'button'}
         disabled={disabled}
         className={commonClassName}
-        ref={ref}
+        ref={ref as React.Ref<HTMLButtonElement>}
       />
     );
   },

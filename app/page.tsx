@@ -58,17 +58,17 @@ export default function DashboardPage() {
 
   const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
-  if (!activeBusiness) {
-    return (
-      <WorkspaceLayout>
-        <Section title="Welcome" description="Select or create a home business to get started." />
-      </WorkspaceLayout>
-    );
-  }
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [wizardForm, setWizardForm] = useState({
+    name: '',
+    website: '',
+    industry: '',
+  });
 
-  const signals = companySignals[activeBusiness.id] ?? [];
-
-  const marketingSetup = marketingSetups.find(setup => setup.homeBusinessId === activeBusiness.id);
+  const marketingSetup = useMemo(() => {
+    if (!activeBusiness) return undefined;
+    return marketingSetups.find(setup => setup.homeBusinessId === activeBusiness.id);
+  }, [activeBusiness, marketingSetups]);
 
   useEffect(() => {
     if (activeBusiness && !marketingSetup) {
@@ -76,19 +76,26 @@ export default function DashboardPage() {
     }
   }, [activeBusiness, marketingSetup, startMarketingSetup]);
 
+  if (!activeBusiness) {
+    return (
+      <WorkspaceLayout>
+        <Section title="Welcome" description="Select or create a home business to get started.">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Use the Add Business button to launch a workspace and invite the AI crew.
+          </p>
+        </Section>
+      </WorkspaceLayout>
+    );
+  }
+
+  const signals = companySignals[activeBusiness.id] ?? [];
+
   const marketingHealth = marketingSetup ? computeMarketingHealth(activeBusiness.id) : { score: 0, band: 'red' as const };
   const showSetupNudge =
     !activeBusiness.marketingSetupCompleted &&
     marketingSetup &&
     marketingHealth.score < 80 &&
     !marketingSetupDismissed[activeBusiness.id];
-
-  const [isWizardOpen, setIsWizardOpen] = useState(false);
-  const [wizardForm, setWizardForm] = useState({
-    name: '',
-    website: '',
-    industry: '',
-  });
 
   const handleCreateBusiness = () => {
     if (!wizardForm.name.trim()) return;

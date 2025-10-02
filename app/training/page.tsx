@@ -20,7 +20,11 @@ export default function TrainingPage() {
   if (!activeBusiness) {
     return (
       <WorkspaceLayout>
-        <Section title="No business selected" description="Choose a Home Business to manage training data." />
+        <Section title="No business selected" description="Choose a Home Business to manage training data.">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Training datasets unlock once you focus on a specific franchise workspace.
+          </p>
+        </Section>
       </WorkspaceLayout>
     );
   }
