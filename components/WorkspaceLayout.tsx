@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -42,6 +42,8 @@ const NAV_ITEMS = [
   { key: 'settings', label: 'Settings', href: '/settings', icon: Settings },
 ] as const;
 
+const EXPANDED_STORAGE_KEY = 'ui.sidebar.expandedBusiness';
+
 interface WorkspaceLayoutProps {
   children: ReactNode;
   headerActions?: ReactNode;
@@ -69,10 +71,43 @@ export function WorkspaceLayout({ children, headerActions }: WorkspaceLayoutProp
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [assignments, setAssignments] = useState<Record<string, string[]>>({});
   const [hudOpen, setHudOpen] = useState(false);
+  const [expandedBusinessId, setExpandedBusinessId] = useState<string | null>(null);
+  const hasHydratedExpanded = useRef(false);
 
   useEffect(() => {
     setHasMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!businesses.length || hasHydratedExpanded.current) return;
+    let stored: string | null = null;
+    if (typeof window !== 'undefined') {
+      stored = window.localStorage.getItem(EXPANDED_STORAGE_KEY);
+    }
+    const fallback = stored && businesses.some(business => business.id === stored)
+      ? stored
+      : activeHomeBusinessId ?? businesses[0]?.id ?? null;
+    if (fallback) {
+      setExpandedBusinessId(fallback);
+      if (fallback !== activeHomeBusinessId) {
+        setActiveHomeBusinessId(fallback);
+      }
+    }
+    hasHydratedExpanded.current = true;
+  }, [businesses, activeHomeBusinessId, setActiveHomeBusinessId]);
+
+  useEffect(() => {
+    if (!hasHydratedExpanded.current) return;
+    if (!activeHomeBusinessId) return;
+    if (expandedBusinessId !== activeHomeBusinessId) {
+      setExpandedBusinessId(activeHomeBusinessId);
+    }
+  }, [activeHomeBusinessId, expandedBusinessId]);
+
+  useEffect(() => {
+    if (!expandedBusinessId || typeof window === 'undefined') return;
+    window.localStorage.setItem(EXPANDED_STORAGE_KEY, expandedBusinessId);
+  }, [expandedBusinessId]);
 
   useEffect(() => {
     setAssignments(prev => {
@@ -118,47 +153,70 @@ export function WorkspaceLayout({ children, headerActions }: WorkspaceLayoutProp
             Home Businesses
           </div>
           <div className="space-y-3">
-            {businesses.map(business => (
-              <button
-                key={business.id}
-                onClick={() => setActiveHomeBusinessId(business.id)}
-                className={cn(
-                  'w-full rounded-2xl border px-4 py-4 text-left transition focus:outline-none',
-                  activeBusiness && business.id === activeBusiness.id
-                    ? 'border-slate-900 bg-slate-900 text-white shadow dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
-                    : 'border-transparent bg-slate-100/70 hover:border-slate-200 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800',
-                )}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-sm font-semibold">{business.name}</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{business.industry}</p>
+            {businesses.map(business => {
+              const isActive = activeBusiness && business.id === activeBusiness.id;
+              const isExpanded = expandedBusinessId === business.id;
+              const panelId = `business-panel-${business.id}`;
+              return (
+                <div
+                  key={business.id}
+                  className={cn(
+                    'rounded-2xl border px-4 py-4 transition',
+                    isActive
+                      ? 'border-slate-900 bg-slate-900 text-white shadow dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
+                      : 'border-transparent bg-slate-100/70 hover:border-slate-200 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800',
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveHomeBusinessId(business.id);
+                      setExpandedBusinessId(business.id);
+                    }}
+                    className="flex w-full items-start justify-between gap-3 text-left focus:outline-none"
+                    aria-expanded={isExpanded}
+                    aria-controls={panelId}
+                  >
+                    <div>
+                      <h3 className="text-sm font-semibold">{business.name}</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{business.industry}</p>
+                    </div>
+                    <Chip variant="info" className="text-[10px]">
+                      {business.tier}
+                    </Chip>
+                  </button>
+                  <div
+                    id={panelId}
+                    className={cn(
+                      'grid overflow-hidden transition-all duration-300 ease-in-out',
+                      isExpanded ? 'mt-3 grid-rows-[1fr] opacity-100' : 'mt-0 grid-rows-[0fr] opacity-0',
+                    )}
+                  >
+                    <div className="min-h-0">
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        {(assignments[business.id] ?? business.aiAgentIds).map(agentId => {
+                          const agent = agentRegistry[agentId];
+                          if (!agent) return null;
+                          if (!hasMounted) {
+                            return <AgentBadge key={`${business.id}-${agentId}`} agent={agent} size="xs" />;
+                          }
+                          return (
+                            <button
+                              key={`${business.id}-${agentId}`}
+                              type="button"
+                              onClick={() => setOpenAgentId(agent.id)}
+                              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-2 py-1 text-slate-600 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-600"
+                            >
+                              <AgentBadge agent={agent} size="xs" />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
-                  <Chip variant="info" className="text-[10px]">
-                    {business.tier}
-                  </Chip>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                  {(assignments[business.id] ?? business.aiAgentIds).map(agentId => {
-                    const agent = agentRegistry[agentId];
-                    if (!agent) return null;
-                    if (!hasMounted) {
-                      return <AgentBadge key={`${business.id}-${agentId}`} agent={agent} size="xs" />;
-                    }
-                    return (
-                      <button
-                        key={`${business.id}-${agentId}`}
-                        type="button"
-                        onClick={() => setOpenAgentId(agent.id)}
-                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-2 py-1 text-slate-600 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-slate-600"
-                      >
-                        <AgentBadge agent={agent} size="xs" />
-                      </button>
-                    );
-                  })}
-                </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
           <div className="pt-2">
             <Button size="sm" variant="outline" className="w-full" onClick={() => setIsAssignDialogOpen(true)}>
