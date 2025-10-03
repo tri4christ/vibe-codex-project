@@ -32,7 +32,7 @@ import { OnboardingPanel } from '@/components/onboarding/OnboardingPanel';
 
 const NAV_ITEMS = [
   { key: 'dashboard', label: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { key: 'playbooks', label: 'Playbooks', href: '/playbooks', icon: Bot },
+  { key: 'playbooks', label: 'Focus', href: '/playbooks', icon: Bot },
   { key: 'prospects', label: 'Prospects', href: '/prospects', icon: Building2 },
   { key: 'people', label: 'People', href: '/people', icon: Users },
   { key: 'training', label: 'Training', href: '/training', icon: Upload },

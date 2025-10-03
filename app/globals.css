@@ -22,3 +22,7 @@ a {
 }
 
 /* Add more global styles below as needed */
+
+.focus-status-dot {
+  @apply inline-block h-2.5 w-2.5 rounded-full bg-emerald-500 align-middle;
+}
