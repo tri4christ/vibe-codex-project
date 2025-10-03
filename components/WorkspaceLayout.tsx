@@ -28,6 +28,7 @@ import { AgentDrawer } from '@/components/agents/AgentDrawer';
 import { AgentBadge } from '@/components/agents/AgentBadge';
 import { AssignDialog } from '@/components/agents/AssignDialog';
 import { OwnerHUD } from '@/components/owner/OwnerHUD';
+import { OnboardingPanel } from '@/components/onboarding/OnboardingPanel';
 
 const NAV_ITEMS = [
   { key: 'dashboard', label: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -265,6 +266,7 @@ export function WorkspaceLayout({ children, headerActions }: WorkspaceLayoutProp
         }
       />
       <OwnerHUD open={hudOpen} onClose={() => setHudOpen(false)} />
+      <OnboardingPanel />
     </div>
   );
 }

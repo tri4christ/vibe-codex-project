@@ -69,6 +69,14 @@ This starter is intentionally minimal but provides a solid foundation.  To build
 
 Feel free to explore and customise the configuration files (ESLint, Prettier, Tailwind, Next.js) to suit your team’s standards.
 
+## 📚 Project Docs
+
+Additional documentation lives in the `docs/` directory:
+
+- `ARCHITECTURE.md` — technical overview of the stack, module structure, state management, and roadmap.
+- `AGENTS.md` — profiles for the AI crew and human leadership with asset references and UX touchpoints.
+- `NOTES.md` — an informal scratchpad for vibe-coding ideas, TODOs, style cues, and frequently used commands.
+
 ## 📝 License
 
 This project is licensed under the MIT License.  See the [LICENSE](LICENSE) file for details.

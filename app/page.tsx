@@ -10,6 +10,7 @@ import { LimitBar } from '@/components/LimitBar';
 import { RecentSignals } from '@/components/RecentSignals';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
+import { useOnboarding } from '@/lib/onboarding/store';
 import { Upload, Palette, CheckCircle2, Sparkles } from 'lucide-react';
 import { Modal, ModalFooter } from '@/components/Modal';
 import { createPlaybookState } from '@/lib/mockData';
@@ -28,6 +29,7 @@ function KpiCard({ label, value, trend }: { label: string; value: string; trend:
 
 export default function DashboardPage() {
   const router = useRouter();
+  const onboarding = useOnboarding();
   const {
     businesses,
     activeHomeBusinessId,
@@ -127,6 +129,7 @@ export default function DashboardPage() {
     startMarketingSetup(id);
     setIsWizardOpen(false);
     setWizardForm({ name: '', website: '', industry: '' });
+    onboarding.openOnboarding(id);
   };
 
   return (
