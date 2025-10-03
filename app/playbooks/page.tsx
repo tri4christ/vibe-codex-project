@@ -15,6 +15,8 @@ import type { ProspectBusiness, SignalItem, ContactMemory } from '@/lib/types';
 import type { ContactRecord } from '@/lib/mockData';
 import type { BusinessPlaybookState } from '@/lib/mockData';
 import { Sparkles, FileText, Users, Bot } from 'lucide-react';
+import { features } from '@/lib/features';
+import { FocusWorkspace } from '@/components/focus/FocusWorkspace';
 
 interface DiscoveryCandidate {
   id: string;
@@ -47,6 +49,13 @@ const DISCOVERY_POOL: DiscoveryCandidate[] = [
 const MARKETING_OWNERS = ['Scout', 'Story', 'Piper', 'Caleb', 'Eden', 'Leo'];
 
 export default function PlaybooksPage() {
+  if (features.focusPlaybooks) {
+    return <FocusWorkspace />;
+  }
+  return <LegacyPlaybooksPage />;
+}
+
+function LegacyPlaybooksPage() {
   const searchParams = useSearchParams();
   const initialPlaybook = searchParams?.get('playbook') === 'marketing-setup' ? 'marketing-setup' : 'prospect-to-contract';
   const [selectedPlaybook, setSelectedPlaybook] = useState<'prospect-to-contract' | 'marketing-setup'>(initialPlaybook);

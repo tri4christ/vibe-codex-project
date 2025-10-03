@@ -129,3 +129,36 @@ export type MarketingSetup = {
   requiresApproval: boolean;
   completedAt?: string;
 };
+
+export type FocusStatus = 'draft' | 'active' | 'completed';
+
+export interface FocusKpi {
+  id: string;
+  label: string;
+  target?: string;
+  progress?: string;
+}
+
+export interface FocusMilestone {
+  id: string;
+  title: string;
+  dueDate?: string;
+  completed: boolean;
+}
+
+export interface Focus {
+  id: string;
+  businessId: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  tags: string[];
+  kpis: FocusKpi[];
+  milestones: FocusMilestone[];
+  status: FocusStatus;
+  createdAt: string;
+  updatedAt: string;
+  ownerAgent: 'Leo';
+  qaAgent: 'Eden';
+}
