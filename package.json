@@ -7,12 +7,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "export": "next export",
-    "start": "next start",
-    "preview": "npm run build && npm run export",
-    "lint": "next lint",
-    "codex": "ts-node scripts/codex.ts",
-    "normalize:avatars": "node scripts/normalize-avatars.mjs"
+    "start": "next start"
   },
   "dependencies": {
     "autoprefixer": "^10.4.16",
