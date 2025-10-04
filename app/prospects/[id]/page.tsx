@@ -13,9 +13,6 @@ import { useCreoStore } from '@/lib/store';
 
 export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
-export function generateStaticParams() {
-  return [] as Array<{ id: string }>;
-}
 
 const TABS = ['Overview', 'People', 'Timeline', 'Playbooks'] as const;
 
